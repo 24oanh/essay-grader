@@ -2,12 +2,13 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const linkClass = ({ isActive }) =>
-  `rounded-lg px-3 py-1 text-sm ${
-    isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+  `rounded-lg px-3 py-1 text-sm ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
   }`;
 
 export default function Layout({ children }) {
-  const { user, isAdmin, isStaff, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
+  const isUser = user?.role === "USER";
+  const isTeacher = user?.role === "TEACHER";
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -24,17 +25,26 @@ export default function Layout({ children }) {
           <nav className="flex flex-wrap items-center gap-2">
             {user ? (
               <>
-                <NavLink to="/" end className={linkClass}>Chấm bài</NavLink>
-                <NavLink to="/history" className={linkClass}>Lịch sử</NavLink>
-                {isStaff && <NavLink to="/teacher" className={linkClass}>Chấm lại bài</NavLink>}
-                {isAdmin && <NavLink to="/admin" className={linkClass}>Quản trị</NavLink>}
-                {/* [MỚI] ADMIN duyệt đơn giáo viên */}
-                {isAdmin && <NavLink to="/admin/teacher-requests" className={linkClass}>Duyệt giáo viên</NavLink>}
-                <NavLink to="/appeals" className={linkClass}>Khiếu nại</NavLink>
-                {isStaff && <NavLink to="/admin/appeals" className={linkClass}>Xử lý khiếu nại</NavLink>}
-                {/* [MỚI] nút đăng ký giáo viên, chỉ hiện với tài khoản USER */}
-                {user.role === "USER" && (
-                  <NavLink to="/teacher-request" className={linkClass}>Đăng ký giáo viên</NavLink>
+                {isUser && (
+                  <>
+                    <NavLink to="/" end className={linkClass}>Nộp bài</NavLink>
+                    <NavLink to="/history" className={linkClass}>Lịch sử</NavLink>
+                    <NavLink to="/appeals" className={linkClass}>Khiếu nại</NavLink>
+                    <NavLink to="/teacher-request" className={linkClass}>Đăng ký giáo viên</NavLink>
+                  </>
+                )}
+                {isTeacher && (
+                  <>
+                    <NavLink to="/teacher/assignments" className={linkClass}>Đề bài</NavLink>
+                    <NavLink to="/teacher/stats" className={linkClass}>Thống kê</NavLink>
+                    <NavLink to="/teacher/appeals" className={linkClass}>Xử lý khiếu nại</NavLink>
+                  </>
+                )}
+                {isAdmin && (
+                  <>
+                    <NavLink to="/admin" end className={linkClass}>Quản trị</NavLink>
+                    <NavLink to="/admin/teacher-requests" className={linkClass}>Duyệt giáo viên</NavLink>
+                  </>
                 )}
 
                 <span className="ml-2 text-sm text-gray-600">

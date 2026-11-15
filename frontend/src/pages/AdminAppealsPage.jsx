@@ -4,6 +4,7 @@ import CriteriaChart from "../components/CriteriaChart";
 import { getAdminAppeals, resolveAppeal } from "../api/appealApi";
 import { getHistoryDetail } from "../api/essayApi";
 import { useAuth } from "../context/AuthContext";
+import { CRITERIA_KEYS, CRITERIA_LABELS } from "../utils/criteria";
 
 const MAX_SCORE = 10; // phải khớp với MAX_SCORE trong ScoreCard và với @DecimalMax ở backend
 
@@ -51,9 +52,8 @@ export default function AdminAppealsPage() {
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
-              className={`rounded-full px-3 py-1 text-sm ${
-                filter === f.key ? "bg-blue-600 text-white" : "border text-gray-600 hover:bg-gray-100"
-              }`}
+              className={`rounded-full px-3 py-1 text-sm ${filter === f.key ? "bg-blue-600 text-white" : "border text-gray-600 hover:bg-gray-100"
+                }`}
             >
               {f.label}
             </button>
@@ -147,7 +147,7 @@ function AppealCard({ appeal, onResolved }) {
             Đây là khiếu nại của chính bạn, cần một người chấm khác xử lý.
           </p>
         ) : (
-          <ResolveForm appeal={appeal} onResolved={onResolved} />
+          <ResolveForm appeal={appeal} aiCriteria={detail?.result.criteria} onResolved={onResolved} />
         )
       ) : (
         <div className="mt-3 rounded-lg border bg-gray-50 p-3 text-sm text-gray-600">
@@ -170,9 +170,16 @@ function AppealCard({ appeal, onResolved }) {
   );
 }
 
-function ResolveForm({ appeal, onResolved }) {
+function ResolveForm({ appeal, aiCriteria, onResolved }) {
   const [decision, setDecision] = useState("APPROVED");
-  const [newScore, setNewScore] = useState(String(appeal.originalScore));
+  const [criteria, setCriteria] = useState(Object.fromEntries(CRITERIA_KEYS.map((k) => [k, ""])));
+
+  useEffect(() => {
+    if (!aiCriteria) return;
+    setCriteria((c) =>
+      Object.fromEntries(CRITERIA_KEYS.map((k) => [k, c[k] !== "" ? c[k] : String(aiCriteria[k] ?? "")]))
+    );
+  }, [aiCriteria]);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -183,11 +190,16 @@ function ResolveForm({ appeal, onResolved }) {
 
     if (!note.trim()) return setError("Vui lòng ghi chú lý do quyết định.");
 
-    let score = null;
+    let payloadCriteria = null;
     if (decision === "APPROVED") {
-      score = Number(newScore);
-      if (newScore === "" || Number.isNaN(score) || score < 0 || score > MAX_SCORE) {
-        return setError(`Điểm phải nằm trong khoảng từ 0 đến ${MAX_SCORE}.`);
+      payloadCriteria = {};
+      for (const k of CRITERIA_KEYS) {
+        const v = criteria[k];
+        const n = Number(v);
+        if (v === "" || Number.isNaN(n) || n < 0 || n > MAX_SCORE) {
+          return setError(`Điểm "${CRITERIA_LABELS[k]}" phải từ 0 đến ${MAX_SCORE}.`);
+        }
+        payloadCriteria[k] = n;
       }
     }
 
@@ -195,7 +207,7 @@ function ResolveForm({ appeal, onResolved }) {
     try {
       const updated = await resolveAppeal(appeal.id, {
         status: decision,
-        newScore: score,
+        criteria: payloadCriteria,
         note: note.trim(),
       });
       onResolved(updated);
@@ -232,18 +244,34 @@ function ResolveForm({ appeal, onResolved }) {
       </div>
 
       {decision === "APPROVED" && (
-        <label className="block text-sm text-gray-700">
-          Điểm mới (0 – {MAX_SCORE})
-          <input
-            type="number"
-            min="0"
-            max={MAX_SCORE}
-            step="0.1"
-            value={newScore}
-            onChange={(e) => setNewScore(e.target.value)}
-            className="ml-2 w-24 rounded-lg border border-gray-300 p-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </label>
+        <div className="space-y-2">
+          <p className="text-sm text-gray-700">Điểm từng tiêu chí (0 – {MAX_SCORE})</p>
+          <div className="flex flex-wrap gap-4">
+            {CRITERIA_KEYS.map((k) => (
+              <label key={k} className="text-sm text-gray-700">
+                {CRITERIA_LABELS[k]}
+                {aiCriteria && <span className="text-gray-400"> (AI: {aiCriteria[k]})</span>}
+                <input
+                  type="number"
+                  min="0"
+                  max={MAX_SCORE}
+                  step="0.1"
+                  value={criteria[k]}
+                  onChange={(e) => setCriteria((c) => ({ ...c, [k]: e.target.value }))}
+                  className="ml-2 w-20 rounded-lg border border-gray-300 p-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500">
+            Điểm tổng do hệ thống tự tính khi lưu (theo trọng số của đề bài, hoặc trung bình cộng nếu bài nộp tự do).
+          </p>
+          {!aiCriteria && (
+            <p className="text-xs text-gray-500">
+              Bấm "Xem bài luận" để xem điểm AI và nội dung bài trước khi chấm.
+            </p>
+          )}
+        </div>
       )}
 
       <textarea

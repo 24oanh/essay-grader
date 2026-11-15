@@ -7,11 +7,11 @@ export default function useScoreEssay() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const submit = async (text) => {
+  const submit = async (text, assignmentId) => {
     setLoading(true);
     setError("");
     try {
-      const data = await scoreEssay(text);
+      const data = await scoreEssay(text, assignmentId);
       setResult(data);
       addHistory(text, data);
     } catch (e) {

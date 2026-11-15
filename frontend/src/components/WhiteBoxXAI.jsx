@@ -2,24 +2,24 @@ import { useState } from "react";
 
 // Trọng số của từng tiêu chí trong mô hình (white-box: công khai, cố định)
 const CRITERIA_WEIGHTS = {
-  content: 0.5,       // Nội dung chiếm 50%
-  organization: 0.3,  // Bố cục chiếm 30%
-  language: 0.2,      // Ngôn ngữ chiếm 20%
-};
-
-const CRITERIA_LABELS = {
-  content: "Nội dung",
-  organization: "Bố cục",
-  language: "Ngôn ngữ",
+  content: 0.2,
+  organization: 0.2,
+  grammar: 0.2,
+  vocabulary: 0.2,
+  coherence: 0.2,
 };
 
 const CRITERIA_DESCRIPTIONS = {
   content:
     "Đánh giá mức độ phát triển ý tưởng, luận điểm rõ ràng, dẫn chứng phù hợp và sự liên quan đến chủ đề.",
   organization:
-    "Đánh giá cấu trúc bài gồm mở bài, thân bài, kết bài; sự mạch lạc và liên kết giữa các đoạn.",
-  language:
-    "Đánh giá từ vựng phong phú, ngữ pháp chính xác, câu văn đa dạng và ít lỗi chính tả.",
+    "Đánh giá cấu trúc bài gồm mở bài, thân bài, kết bài và cách sắp xếp các đoạn.",
+  grammar:
+    "Đánh giá độ chính xác của ngữ pháp, cấu trúc câu và chính tả.",
+  vocabulary:
+    "Đánh giá mức độ phong phú, chính xác và phù hợp của từ vựng.",
+  coherence:
+    "Đánh giá sự mạch lạc và liên kết giữa các câu, các đoạn trong bài.",
 };
 
 const MAX_SCORE = 10;

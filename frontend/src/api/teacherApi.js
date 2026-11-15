@@ -5,3 +5,9 @@ export const getTeacherEssays = (reviewed) =>
 
 export const reviewEssay = (id, payload) =>
   http(`/api/teacher/essays/${id}/review`, { method: "PUT", body: JSON.stringify(payload) });
+
+export const batchScoreEssays = (files) => {
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  return http("/api/teacher/essays/batch-score", { method: "POST", body: form });
+};

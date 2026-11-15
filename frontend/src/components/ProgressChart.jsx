@@ -5,8 +5,10 @@ import {
 const LINES = [
   { key: "score", name: "Tổng điểm", color: "#2563eb", width: 3 },
   { key: "content", name: "Nội dung", color: "#22c55e", width: 1.5 },
-  { key: "organization", name: "Bố cục", color: "#eab308", width: 1.5 },
-  { key: "language", name: "Ngôn ngữ", color: "#ef4444", width: 1.5 },
+  { key: "organization", name: "Cấu trúc", color: "#eab308", width: 1.5 },
+  { key: "grammar", name: "Ngữ pháp", color: "#ef4444", width: 1.5 },
+  { key: "vocabulary", name: "Từ vựng", color: "#a855f7", width: 1.5 },
+  { key: "coherence", name: "Mạch lạc", color: "#06b6d4", width: 1.5 },
 ];
 
 export default function ProgressChart({ points }) {
@@ -44,7 +46,7 @@ export default function ProgressChart({ points }) {
             <Legend />
             {LINES.map((l) => (
               <Line key={l.key} type="monotone" dataKey={l.key} name={l.name}
-                    stroke={l.color} strokeWidth={l.width} dot={{ r: 3 }} />
+                stroke={l.color} strokeWidth={l.width} dot={{ r: 3 }} />
             ))}
           </LineChart>
         </ResponsiveContainer>

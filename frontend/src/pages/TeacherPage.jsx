@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { getTeacherEssays, reviewEssay } from "../api/teacherApi";
 import { useAuth } from "../context/AuthContext";
+import { CRITERIA_LABELS as LABELS } from "../utils/criteria";
 
 const MAX_SCORE = 10; // phải khớp với backend
-
-const LABELS = { content: "Nội dung", organization: "Bố cục", language: "Ngôn ngữ" };
 
 const FILTERS = [
   { key: "false", label: "Chưa xem lại" },

@@ -1,7 +1,7 @@
 import { http } from "./http";
 
-export const scoreEssay = (text) =>
-  http("/api/essays/score", { method: "POST", body: JSON.stringify({ text }) });
+export const scoreEssay = (text, assignmentId = null) =>
+  http("/api/essays/score", { method: "POST", body: JSON.stringify({ text, assignmentId }) });
 
 export const getHistory = () => http("/api/essays");
 export const getHistoryDetail = (id) => http(`/api/essays/${id}`);

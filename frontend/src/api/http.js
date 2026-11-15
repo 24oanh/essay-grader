@@ -11,7 +11,7 @@ export function loadAuth() {
 
 export async function http(path, options = {}) {
   const headers = { ...options.headers };
-  if (options.body) headers["Content-Type"] = "application/json";
+  if (options.body && !(options.body instanceof FormData)) headers["Content-Type"] = "application/json";
 
   const auth = loadAuth();
   if (auth?.token) headers.Authorization = `Bearer ${auth.token}`;
@@ -37,4 +37,30 @@ export async function http(path, options = {}) {
   }
 
   return res.status === 204 ? null : res.json();
+}
+
+export async function download(path) {
+  const auth = loadAuth();
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: auth?.token ? { Authorization: `Bearer ${auth.token}` } : {},
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem(AUTH_KEY);
+    window.location.assign("/login");
+    throw new Error("Phiên đăng nhập đã hết hạn");
+  }
+
+  if (!res.ok) {
+    let message = "Không tải được file, vui lòng thử lại.";
+    try {
+      const body = await res.json();
+      if (body.message) message = body.message;
+    } catch {
+      // không có body JSON
+    }
+    throw new Error(message);
+  }
+
+  return res.blob();
 }

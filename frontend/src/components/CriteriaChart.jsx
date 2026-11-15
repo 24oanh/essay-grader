@@ -9,14 +9,9 @@ import {
   LabelList,
 } from "recharts";
 
-const MAX_SCORE = 10; // phải khớp với MAX_SCORE trong ScoreCard
+import { CRITERIA_LABELS } from "../utils/criteria";
 
-// Đổi tên tiêu chí từ backend sang tiếng Việt
-const LABELS = {
-  content: "Nội dung",
-  organization: "Bố cục",
-  language: "Ngôn ngữ",
-};
+const MAX_SCORE = 10; // phải khớp với MAX_SCORE trong ScoreCard
 
 function barColor(score) {
   const percent = (score / MAX_SCORE) * 100;
@@ -28,7 +23,7 @@ function barColor(score) {
 
 export default function CriteriaChart({ criteria }) {
   const data = Object.entries(criteria).map(([key, value]) => ({
-    name: LABELS[key] ?? key,
+    name: CRITERIA_LABELS[key] ?? key,
     score: value,
   }));
 
