@@ -8,6 +8,7 @@ import com.example.essayscoring.dto.ScoreResponse.WordWeight;
 import com.example.essayscoring.entity.EssayResult;
 import com.example.essayscoring.entity.Role;
 import com.example.essayscoring.entity.User;
+import com.example.essayscoring.entity.Assignment;
 import com.example.essayscoring.repository.AppealRepository;
 import com.example.essayscoring.repository.EssayResultRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.essayscoring.dto.BatchScoreResult;
 
 @Service
 public class EssayService {
@@ -26,15 +32,20 @@ public class EssayService {
     private final EssayResultRepository repository;
     private final AppealRepository appeals;
     private final ObjectMapper mapper;
+    private final AssignmentService assignments;
+    private final ExecutorService batchPool = Executors.newFixedThreadPool(4);
 
-    public EssayService(EssayResultRepository repository, AppealRepository appeals, ObjectMapper mapper) {
+    public EssayService(EssayResultRepository repository, AppealRepository appeals, ObjectMapper mapper,
+            AssignmentService assignments) {
         this.repository = repository;
         this.appeals = appeals;
         this.mapper = mapper;
+        this.assignments = assignments;
     }
 
-    public ScoreResponse score(String text, User user) {
-        return scoreAndSave(text, user, null);
+    public ScoreResponse score(String text, Long assignmentId, User user) {
+        Assignment assignment = assignmentId == null ? null : assignments.get(assignmentId);
+        return scoreAndSave(text, user, null, assignment);
     }
 
     public ScoreResponse resubmit(Long parentId, String text, User user) {
@@ -43,13 +54,31 @@ public class EssayService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ chủ bài mới được nộp lại");
         }
         Long rootId = parent.getRootId() != null ? parent.getRootId() : parent.getId();
-        return scoreAndSave(text, user, rootId);
+        return scoreAndSave(text, user, rootId, parent.getAssignment());
     }
 
-    private ScoreResponse scoreAndSave(String text, User user, Long rootId) {
+    public List<BatchScoreResult> scoreBatch(List<MultipartFile> files, User user) {
+        List<CompletableFuture<BatchScoreResult>> futures = files.stream()
+                .map(f -> CompletableFuture.supplyAsync(() -> {
+                    String name = f.getOriginalFilename();
+                    try {
+                        String text = FileTextExtractor.extract(f);
+                        return new BatchScoreResult(name, true, scoreAndSave(text, user, null, null), null);
+                    } catch (Exception ex) {
+                        return new BatchScoreResult(name, false, null, ex.getMessage());
+                    }
+                }, batchPool))
+                .toList();
+        return futures.stream().map(CompletableFuture::join).toList();
+    }
+
+    private ScoreResponse scoreAndSave(String text, User user, Long rootId, Assignment assignment) {
         ScoreResponse response = fakeScore(text); // TODO: thay bằng ModelClientService
+        if (assignment != null)
+            response = assignments.applyRubric(response, assignment);
 
         EssayResult entity = new EssayResult();
+        entity.setAssignment(assignment);
         entity.setText(text);
         entity.setScore(response.score());
         entity.setDetailJson(toJson(response));
@@ -76,10 +105,10 @@ public class EssayService {
         EssayResult e = findAccessible(id, user);
         return new HistoryDetail(e.getId(), e.getCreatedAt(), e.getText(), fromJson(e.getDetailJson()),
                 e.getScore(), e.isHumanReviewed(),
-                readCriteria(e.getCriteriaOverrideJson()),            // [MỚI]
-                e.getTeacherNote(),                                    // [MỚI]
+                readCriteria(e.getCriteriaOverrideJson()), // [MỚI]
+                e.getTeacherNote(), // [MỚI]
                 e.getReviewer() != null ? e.getReviewer().getUsername() : null, // [MỚI]
-                e.getReviewedAt());                                    // [MỚI]
+                e.getReviewedAt()); // [MỚI]
     }
 
     /** Điểm qua các lần nộp của cùng một bài (id bất kỳ trong chuỗi đều được). */
@@ -112,7 +141,8 @@ public class EssayService {
 
     @Transactional
     public void deleteAll(User user) {
-        // Giữ nguyên: chỉ ADMIN xóa được bài của mọi người, các vai trò khác chỉ xóa bài của mình
+        // Giữ nguyên: chỉ ADMIN xóa được bài của mọi người, các vai trò khác chỉ xóa
+        // bài của mình
         List<EssayResult> list = isAdmin(user)
                 ? repository.findAllByOrderByCreatedAtDesc()
                 : repository.findAllByOwnerOrderByCreatedAtDesc(user);
@@ -162,9 +192,11 @@ public class EssayService {
     }
 
     Map<String, Double> readCriteria(String json) {
-        if (json == null || json.isBlank()) return null;
+        if (json == null || json.isBlank())
+            return null;
         try {
-            return mapper.readValue(json, new TypeReference<Map<String, Double>>() {});
+            return mapper.readValue(json, new TypeReference<Map<String, Double>>() {
+            });
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Dữ liệu tiêu chí bị lỗi", ex);
         }
@@ -188,7 +220,9 @@ public class EssayService {
         Map<String, Double> criteria = new LinkedHashMap<>();
         criteria.put("content", 8.0);
         criteria.put("organization", 7.0);
-        criteria.put("language", 7.5);
+        criteria.put("grammar", 7.5);
+        criteria.put("vocabulary", 7.0);
+        criteria.put("coherence", 8.0);
         return new ScoreResponse(7.5, criteria, explanation);
     }
 }

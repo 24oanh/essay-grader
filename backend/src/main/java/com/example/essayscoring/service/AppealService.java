@@ -14,20 +14,34 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 public class AppealService {
 
+    private static final List<String> KEYS = CriteriaKeys.ALL;
+    private static final double MAX_SCORE = 10.0;
+
     private final AppealRepository appeals;
     private final EssayResultRepository essays;
+    private final EssayService essayService;
+    private final AssignmentService assignments;
 
-    public AppealService(AppealRepository appeals, EssayResultRepository essays) {
+    public AppealService(AppealRepository appeals, EssayResultRepository essays,
+            EssayService essayService, AssignmentService assignments) {
         this.appeals = appeals;
         this.essays = essays;
+        this.essayService = essayService;
+        this.assignments = assignments;
     }
 
-    /** Học sinh gửi khiếu nại cho bài của chính mình. Mỗi bài chỉ được khiếu nại 1 lần. */
+    /**
+     * Học sinh gửi khiếu nại cho bài của chính mình. Mỗi bài chỉ được khiếu nại 1
+     * lần.
+     */
     @Transactional
     public AppealInfo create(Long essayId, String reason, User student) {
         EssayResult essay = essays.findById(essayId)
@@ -82,14 +96,14 @@ public class AppealService {
         }
 
         if (req.status() == AppealStatus.APPROVED) {
-            if (req.newScore() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần nhập điểm mới khi chấp nhận khiếu nại");
-            }
+            Map<String, Double> criteria = validateCriteria(req.criteria());
             EssayResult essay = appeal.getEssay();
-            essay.setScore(req.newScore());      // điểm cuối cùng = điểm của người chấm
+            double newScore = assignments.computeTotal(criteria, essay.getAssignment());
+            essay.setScore(newScore); // điểm cuối cùng = điểm tính từ 3 tiêu chí của người chấm
+            essay.setCriteriaOverrideJson(essayService.writeCriteria(criteria));
             essay.setHumanReviewed(true);
             essays.save(essay);
-            appeal.setNewScore(req.newScore());
+            appeal.setNewScore(newScore);
         }
 
         appeal.setStatus(req.status());
@@ -97,6 +111,23 @@ public class AppealService {
         appeal.setReviewer(reviewer);
         appeal.setResolvedAt(LocalDateTime.now());
         return toInfo(appeals.save(appeal));
+    }
+
+    private Map<String, Double> validateCriteria(Map<String, Double> criteria) {
+        if (criteria == null || !criteria.keySet().equals(Set.copyOf(KEYS))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cần nhập đủ 5 tiêu chí: " + String.join(", ", KEYS));
+        }
+        Map<String, Double> clean = new LinkedHashMap<>();
+        for (String k : KEYS) {
+            Double v = criteria.get(k);
+            if (v == null || v < 0 || v > MAX_SCORE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Điểm tiêu chí phải từ 0 đến " + (int) MAX_SCORE);
+            }
+            clean.put(k, v);
+        }
+        return clean;
     }
 
     private AppealInfo toInfo(Appeal a) {

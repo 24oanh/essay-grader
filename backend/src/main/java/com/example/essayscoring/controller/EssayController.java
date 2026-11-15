@@ -19,6 +19,7 @@ import com.example.essayscoring.dto.HistoryDetail;
 import com.example.essayscoring.dto.HistoryItem;
 import com.example.essayscoring.dto.ProgressPoint;
 import com.example.essayscoring.dto.ScoreResponse;
+import com.example.essayscoring.dto.ScoreRequest;
 import com.example.essayscoring.entity.User;
 import com.example.essayscoring.repository.UserRepository;
 import com.example.essayscoring.service.EssayService;
@@ -43,8 +44,8 @@ public class EssayController {
     }
 
     @PostMapping("/score")
-    public ScoreResponse score(@Valid @RequestBody EssayRequest request, Authentication auth) {
-        return essayService.score(request.text(), current(auth));
+    public ScoreResponse score(@Valid @RequestBody ScoreRequest request, Authentication auth) {
+        return essayService.score(request.text(), request.assignmentId(), current(auth));
     }
 
     @GetMapping
@@ -71,8 +72,8 @@ public class EssayController {
 
     @PostMapping("/{id}/resubmit")
     public ScoreResponse resubmit(@PathVariable Long id,
-                                @Valid @RequestBody EssayRequest request,
-                                Authentication auth) {
+            @Valid @RequestBody EssayRequest request,
+            Authentication auth) {
         return essayService.resubmit(id, request.text(), current(auth));
     }
 

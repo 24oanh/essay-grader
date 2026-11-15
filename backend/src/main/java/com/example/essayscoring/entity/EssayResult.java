@@ -20,8 +20,25 @@ public class EssayResult {
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    public User getOwner() { return owner; }
-    public void setOwner(User owner) { this.owner = owner; }
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assignment_id")
+    private Assignment assignment;
+
+    public Assignment getAssignment() {
+        return assignment;
+    }
+
+    public void setAssignment(Assignment assignment) {
+        this.assignment = assignment;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,27 +73,83 @@ public class EssayResult {
 
     private LocalDateTime reviewedAt;
 
-    public String getTeacherNote() { return teacherNote; }
-    public void setTeacherNote(String teacherNote) { this.teacherNote = teacherNote; }
-    public String getCriteriaOverrideJson() { return criteriaOverrideJson; }
-    public void setCriteriaOverrideJson(String json) { this.criteriaOverrideJson = json; }
-    public User getReviewer() { return reviewer; }
-    public void setReviewer(User reviewer) { this.reviewer = reviewer; }
-    public LocalDateTime getReviewedAt() { return reviewedAt; }
-    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
+    public String getTeacherNote() {
+        return teacherNote;
+    }
 
-    public Long getRootId() { return rootId; }
-    public void setRootId(Long rootId) { this.rootId = rootId; }
+    public void setTeacherNote(String teacherNote) {
+        this.teacherNote = teacherNote;
+    }
 
-    public Long getId() { return id; }
-    public String getText() { return text; }
-    public void setText(String text) { this.text = text; }
-    public double getScore() { return score; }
-    public void setScore(double score) { this.score = score; }
-    public String getDetailJson() { return detailJson; }
-    public void setDetailJson(String detailJson) { this.detailJson = detailJson; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getCriteriaOverrideJson() {
+        return criteriaOverrideJson;
+    }
 
-    public boolean isHumanReviewed() { return Boolean.TRUE.equals(humanReviewed); }
-    public void setHumanReviewed(boolean humanReviewed) { this.humanReviewed = humanReviewed; }
+    public void setCriteriaOverrideJson(String json) {
+        this.criteriaOverrideJson = json;
+    }
+
+    public User getReviewer() {
+        return reviewer;
+    }
+
+    public void setReviewer(User reviewer) {
+        this.reviewer = reviewer;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
+    }
+
+    public Long getRootId() {
+        return rootId;
+    }
+
+    public void setRootId(Long rootId) {
+        this.rootId = rootId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public double getScore() {
+        return score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    public String getDetailJson() {
+        return detailJson;
+    }
+
+    public void setDetailJson(String detailJson) {
+        this.detailJson = detailJson;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public boolean isHumanReviewed() {
+        return Boolean.TRUE.equals(humanReviewed);
+    }
+
+    public void setHumanReviewed(boolean humanReviewed) {
+        this.humanReviewed = humanReviewed;
+    }
 }
