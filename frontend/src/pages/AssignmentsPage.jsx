@@ -3,10 +3,10 @@ import {
     getMyAssignments, createAssignment, updateAssignment, deleteAssignment,
 } from "../api/assignmentApi";
 import RubricView from "../components/RubricView";
-import { CRITERIA_KEYS, CRITERIA_LABELS } from "../utils/criteria";
+import { CRITERIA_KEYS, CRITERIA_LABELS, DEFAULT_WEIGHT } from "../utils/criteria";
 
 const defaultRubric = () =>
-    Object.fromEntries(CRITERIA_KEYS.map((k) => [k, { weight: "20", description: "" }]));
+    Object.fromEntries(CRITERIA_KEYS.map((k) => [k, { weight: String(DEFAULT_WEIGHT), description: "" }]));
 
 export default function AssignmentsPage() {
     const [items, setItems] = useState([]);
@@ -118,7 +118,7 @@ function AssignmentForm({ initial, onSaved, onCancel }) {
             ? Object.fromEntries(
                 CRITERIA_KEYS.map((k) => [
                     k,
-                    { weight: String(initial.rubric[k].weight), description: initial.rubric[k].description ?? "" },
+                    { weight: String(initial.rubric[k]?.weight ?? 0), description: initial.rubric[k]?.description ?? "" },
                 ])
             )
             : defaultRubric()
@@ -198,7 +198,7 @@ function AssignmentForm({ initial, onSaved, onCancel }) {
                 </p>
                 {CRITERIA_KEYS.map((k) => (
                     <div key={k} className="flex flex-wrap items-center gap-2">
-                        <span className="w-24 text-sm text-gray-700">{CRITERIA_LABELS[k]}</span>
+                        <span className="w-32 text-sm text-gray-700">{CRITERIA_LABELS[k]}</span>
                         <input
                             type="number" min="0" max="100" step="1"
                             value={rubric[k].weight}

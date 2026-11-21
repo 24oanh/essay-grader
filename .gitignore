@@ -1,0 +1,29 @@
+# Java / Maven
+backend/target/
+**/target/
+
+# Database
+*.db
+*.mv.db
+*.lock.db
+
+# Node.js
+node_modules/
+
+# Build
+dist/
+build/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+__pycache__/
+*.pyc

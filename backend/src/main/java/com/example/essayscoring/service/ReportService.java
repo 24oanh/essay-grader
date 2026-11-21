@@ -116,9 +116,12 @@ public class ReportService {
     }
 
     private void writeList(Sheet sh, List<EssayResult> rows, CellStyle header) {
-        String[] heads = { "STT", "Học sinh", "Điểm tổng", "Nội dung", "Cấu trúc", "Ngữ pháp", "Từ vựng", "Mạch lạc",
+        String[] heads = { "STT", "Học sinh", "Điểm tổng",
+                "Dễ hiểu", "Độ phức tạp", "Chính xác", "Trôi chảy",
+                "Dễ lĩnh hội", "Logic", "Tinh tế", "Mục đích",
+                "Sẵn sàng", "Tham gia",
                 "Trạng thái", "Thời gian nộp" };
-        int[] widths = { 6, 24, 12, 12, 12, 12, 12, 12, 26, 20 };
+        int[] widths = { 6, 24, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 26, 20 };
 
         Row h = sh.createRow(0);
         for (int i = 0; i < heads.length; i++) {
@@ -148,8 +151,9 @@ public class ReportService {
                 else
                     c.setCellValue(v);
             }
-            row.createCell(8).setCellValue(e.isHumanReviewed() ? "Giáo viên đã chấm lại" : "Điểm AI");
-            row.createCell(9).setCellValue(e.getCreatedAt().format(FMT));
+            int statusCol = 3 + CRITERIA.length;
+            row.createCell(statusCol).setCellValue(e.isHumanReviewed() ? "Giáo viên đã chấm lại" : "Điểm AI");
+            row.createCell(statusCol + 1).setCellValue(e.getCreatedAt().format(FMT));
             r++;
         }
     }

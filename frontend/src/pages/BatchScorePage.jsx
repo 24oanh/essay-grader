@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { batchScoreEssays } from "../api/teacherApi";
 import ScoreCard from "../components/ScoreCard";
+import CriteriaChart from "../components/CriteriaChart";
 import WordHighlight from "../components/WordHighlight";
+import { CRITERIA_KEYS, CRITERIA_LABELS } from "../utils/criteria";
 
 const MAX_FILES = 50; // khớp @Size(max = 50) ở backend
 const ACCEPT = [".txt", ".docx", ".pdf"];
-const CRITERIA = [
-    { key: "content", label: "Nội dung" },
-    { key: "organization", label: "Bố cục" },
-    { key: "language", label: "Ngôn ngữ" },
-];
+const CRITERIA = CRITERIA_KEYS.map((key) => ({ key, label: CRITERIA_LABELS[key] }));
 
 const isAccepted = (f) => ACCEPT.some((ext) => f.name.toLowerCase().endsWith(ext));
 
@@ -121,7 +119,7 @@ export default function BatchScorePage() {
                         Thành công {okCount}/{rows.length} bài. Bấm vào dòng để xem chi tiết.
                     </p>
                     <div className="overflow-x-auto rounded-lg border bg-white">
-                        <table className="w-full min-w-[640px] text-left text-sm">
+                        <table className="w-full min-w-[1000px] text-left text-sm">
                             <thead className="border-b bg-gray-50 text-gray-500">
                                 <tr>
                                     <th className="p-3">Tên bài</th>
@@ -168,6 +166,7 @@ export default function BatchScorePage() {
                 <div className="space-y-4">
                     <p className="font-semibold text-gray-700">Chi tiết: {detail.name}</p>
                     <ScoreCard score={detail.result.score} />
+                    <CriteriaChart criteria={detail.result.criteria} />
                     <WordHighlight explanation={detail.result.explanation} />
                 </div>
             )}

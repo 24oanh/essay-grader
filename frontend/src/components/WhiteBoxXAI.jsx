@@ -1,25 +1,17 @@
 import { useState } from "react";
-
-// Trọng số của từng tiêu chí trong mô hình (white-box: công khai, cố định)
-const CRITERIA_WEIGHTS = {
-  content: 0.2,
-  organization: 0.2,
-  grammar: 0.2,
-  vocabulary: 0.2,
-  coherence: 0.2,
-};
+import { CRITERIA_KEYS, CRITERIA_LABELS, CRITERIA_GROUPS } from "../utils/criteria";
 
 const CRITERIA_DESCRIPTIONS = {
-  content:
-    "Đánh giá mức độ phát triển ý tưởng, luận điểm rõ ràng, dẫn chứng phù hợp và sự liên quan đến chủ đề.",
-  organization:
-    "Đánh giá cấu trúc bài gồm mở bài, thân bài, kết bài và cách sắp xếp các đoạn.",
-  grammar:
-    "Đánh giá độ chính xác của ngữ pháp, cấu trúc câu và chính tả.",
-  vocabulary:
-    "Đánh giá mức độ phong phú, chính xác và phù hợp của từ vựng.",
-  coherence:
-    "Đánh giá sự mạch lạc và liên kết giữa các câu, các đoạn trong bài.",
+  intelligibility: "Mức độ người đọc hiểu được bài viết mà không bị cản trở bởi lỗi ngôn ngữ.",
+  complexity: "Độ đa dạng và phức tạp của cấu trúc câu, từ vựng.",
+  accuracy: "Độ chính xác về ngữ pháp, dùng từ và chính tả.",
+  fluency: "Sự trôi chảy, tự nhiên khi diễn đạt.",
+  comprehensibility: "Mức độ ý tưởng, nội dung bài viết dễ nắm bắt.",
+  logicality: "Tính chặt chẽ, hợp lý trong lập luận và liên kết ý.",
+  sophistication: "Chiều sâu, sự tinh tế và độc đáo của nội dung.",
+  purposefulness: "Bài viết có mục đích rõ ràng, bám sát yêu cầu đề bài.",
+  willingness: "Thái độ sẵn sàng, nghiêm túc đầu tư cho bài viết.",
+  involvement: "Mức độ tham gia, gắn kết của người viết với chủ đề.",
 };
 
 const MAX_SCORE = 10;
@@ -45,125 +37,71 @@ export default function WhiteBoxXAI({ criteria, score }) {
 
   if (!criteria) return null;
 
-  // Tính điểm đóng góp từng tiêu chí: điểm_tiêu_chí × trọng_số
-  const breakdown = Object.entries(CRITERIA_WEIGHTS).map(([key, weight]) => {
-    const rawScore = criteria[key] ?? 0;
-    const contribution = rawScore * weight;
-    return { key, weight, rawScore, contribution };
-  });
-
-  const computedTotal = breakdown.reduce((sum, r) => sum + r.contribution, 0);
+  // Chỉ hiển thị điểm thật do model trả về, theo đúng 10 tiêu chí
+  const rows = CRITERIA_KEYS.filter((k) => criteria[k] != null).map((key) => ({
+    key,
+    value: criteria[key],
+  }));
+  if (rows.length === 0) return null;
 
   return (
     <div className="rounded-lg border p-4 shadow-sm">
-      {/* Header + nút toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-gray-700">
-            🔍 Giải thích White-Box (XAI)
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Mô hình tính điểm theo công thức tuyến tính có trọng số cố định
+          <p className="text-sm font-semibold text-gray-700">🔍 Giải thích điểm (Concept Bottleneck)</p>
+          <p className="mt-0.5 text-xs text-gray-400">
+            Model dự đoán 10 tiêu chí trung gian rồi mới suy ra điểm tổng
           </p>
         </div>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition-colors"
+          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white transition-colors hover:bg-indigo-700"
         >
-          {open ? "Ẩn giải thích" : "Giải thích White-Box"}
+          {open ? "Ẩn giải thích" : "Xem giải thích"}
         </button>
       </div>
 
-      {/* Nội dung giải thích */}
       {open && (
-        <div className="mt-4 space-y-5 animate-fade-in">
-
-          {/* Công thức */}
-          <div className="rounded-md bg-indigo-50 border border-indigo-200 p-3">
-            <p className="text-xs font-semibold text-indigo-700 mb-1">📐 Công thức tính điểm</p>
-            <p className="text-sm font-mono text-indigo-900">
-              Điểm = {Object.entries(CRITERIA_WEIGHTS)
-                .map(([k, w]) => `${w} × ${CRITERIA_LABELS[k]}`)
-                .join(" + ")}
-            </p>
-          </div>
-
-          {/* Chi tiết từng tiêu chí */}
+        <div className="mt-4 space-y-4">
           <div className="space-y-3">
-            {breakdown.map(({ key, weight, rawScore, contribution }) => {
-              const pct = Math.min(100, (rawScore / MAX_SCORE) * 100);
-              const rating = getRatingLabel(rawScore);
+            {rows.map(({ key, value }) => {
+              const pct = Math.min(100, Math.max(0, (value / MAX_SCORE) * 100));
+              const rating = getRatingLabel(value);
               return (
-                <div key={key} className="rounded-md border p-3 bg-gray-50">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm text-gray-800">
-                          {CRITERIA_LABELS[key]}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${rating.bg} ${rating.color}`}
-                        >
-                          {rating.label}
-                        </span>
-                        <span className="ml-auto text-xs text-gray-400">
-                          Trọng số: {(weight * 100).toFixed(0)}%
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mb-2">
-                        {CRITERIA_DESCRIPTIONS[key]}
-                      </p>
-                      {/* Progress bar */}
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                        <div
-                          className={`h-full rounded-full transition-all duration-500 ${barColor(rawScore)}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-right min-w-[90px]">
-                      <p className="text-xs text-gray-400">Điểm thô</p>
-                      <p className="font-bold text-gray-800">
-                        {rawScore.toFixed(1)} / {MAX_SCORE}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Đóng góp</p>
-                      <p className="font-semibold text-indigo-700">
-                        +{contribution.toFixed(2)}
-                      </p>
-                    </div>
+                <div key={key} className="rounded-md border bg-gray-50 p-3">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-800">{CRITERIA_LABELS[key]}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rating.bg} ${rating.color}`}>
+                      {rating.label}
+                    </span>
+                    <span className="text-xs text-gray-400">Nhóm: {CRITERIA_GROUPS[key]}</span>
+                    <span className="ml-auto font-bold text-gray-800">
+                      {value.toFixed(1)} / {MAX_SCORE}
+                    </span>
+                  </div>
+                  <p className="mb-2 text-xs text-gray-500">{CRITERIA_DESCRIPTIONS[key]}</p>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${barColor(value)}`}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Tổng kết */}
-          <div className="rounded-md border border-indigo-300 bg-indigo-50 p-3 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-indigo-800">Tổng điểm tính theo công thức</p>
-              <p className="text-xs text-indigo-500 mt-0.5">
-                {breakdown
-                  .map((r) => `${r.weight} × ${r.rawScore.toFixed(1)}`)
-                  .join(" + ")}
-                {" = "}
-                <strong>{computedTotal.toFixed(2)}</strong>
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-indigo-700">
-                {computedTotal.toFixed(2)}
-              </p>
-              <p className="text-xs text-indigo-400">/ {MAX_SCORE}</p>
-            </div>
+          <div className="flex items-center justify-between rounded-md border border-indigo-300 bg-indigo-50 p-3">
+            <p className="text-sm font-semibold text-indigo-800">Điểm tổng</p>
+            <p className="text-2xl font-bold text-indigo-700">
+              {score} <span className="text-sm text-indigo-400">/ {MAX_SCORE}</span>
+            </p>
           </div>
 
-          {/* Chú thích độ minh bạch */}
-          <div className="rounded-md bg-gray-100 p-3 text-xs text-gray-500 leading-relaxed">
-            <span className="font-semibold text-gray-700">ℹ️ Về phương pháp White-Box:</span>{" "}
-            Mô hình sử dụng hồi quy tuyến tính có trọng số cố định và công khai. Toàn bộ
-            quá trình tính điểm có thể kiểm tra và tái tạo lại — không có thành phần ẩn hay
-            hộp đen. Điểm cuối cùng là tổng có trọng số của điểm các tiêu chí thành phần.
+          <div className="rounded-md bg-gray-100 p-3 text-xs leading-relaxed text-gray-500">
+            Điểm các tiêu chí và điểm tổng đều do model (RoBERTa + LoRA, 5 fold) dự đoán, đã hiệu chỉnh.
+            Nếu bài thuộc một đề có rubric, điểm tổng được tính lại theo trọng số rubric của giáo viên.
           </div>
         </div>
       )}

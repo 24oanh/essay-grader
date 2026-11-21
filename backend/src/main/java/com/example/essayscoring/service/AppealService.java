@@ -116,7 +116,7 @@ public class AppealService {
     private Map<String, Double> validateCriteria(Map<String, Double> criteria) {
         if (criteria == null || !criteria.keySet().equals(Set.copyOf(KEYS))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Cần nhập đủ 5 tiêu chí: " + String.join(", ", KEYS));
+                    "Cần nhập đủ " + KEYS.size() + " tiêu chí: " + String.join(", ", KEYS));
         }
         Map<String, Double> clean = new LinkedHashMap<>();
         for (String k : KEYS) {

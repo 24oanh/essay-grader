@@ -1,0 +1,12 @@
+target,pearson,rmse,qwk
+Intelligibility (Language),0.865,0.61,0.797
+Complexity (Language),0.871,0.587,0.793
+Accuracy (Language),0.896,0.56,0.822
+Fluency (Language),0.888,0.544,0.807
+Comprehensibility (Content),0.861,0.605,0.813
+Logicality (Content),0.853,0.595,0.788
+Sophistication (Content),0.857,0.584,0.771
+Purposefulness (Content),0.839,0.604,0.783
+Willingness (Attitude),0.842,0.558,0.767
+Involvement (Attitude),0.827,0.547,0.734
+Holistic Score (/100),0.88,5.627,0.821

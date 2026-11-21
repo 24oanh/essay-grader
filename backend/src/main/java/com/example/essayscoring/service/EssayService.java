@@ -4,7 +4,6 @@ import com.example.essayscoring.dto.HistoryDetail;
 import com.example.essayscoring.dto.HistoryItem;
 import com.example.essayscoring.dto.ProgressPoint;
 import com.example.essayscoring.dto.ScoreResponse;
-import com.example.essayscoring.dto.ScoreResponse.WordWeight;
 import com.example.essayscoring.entity.EssayResult;
 import com.example.essayscoring.entity.Role;
 import com.example.essayscoring.entity.User;
@@ -33,14 +32,16 @@ public class EssayService {
     private final AppealRepository appeals;
     private final ObjectMapper mapper;
     private final AssignmentService assignments;
+    private final ModelClientService modelClient;
     private final ExecutorService batchPool = Executors.newFixedThreadPool(4);
 
     public EssayService(EssayResultRepository repository, AppealRepository appeals, ObjectMapper mapper,
-            AssignmentService assignments) {
+            AssignmentService assignments, ModelClientService modelClient) {
         this.repository = repository;
         this.appeals = appeals;
         this.mapper = mapper;
         this.assignments = assignments;
+        this.modelClient = modelClient;
     }
 
     public ScoreResponse score(String text, Long assignmentId, User user) {
@@ -73,7 +74,7 @@ public class EssayService {
     }
 
     private ScoreResponse scoreAndSave(String text, User user, Long rootId, Assignment assignment) {
-        ScoreResponse response = fakeScore(text); // TODO: thay bằng ModelClientService
+        ScoreResponse response = modelClient.score(text);
         if (assignment != null)
             response = assignments.applyRubric(response, assignment);
 
@@ -210,19 +211,4 @@ public class EssayService {
         }
     }
 
-    // Dữ liệu giả, sau này thay bằng mô hình thật
-    private ScoreResponse fakeScore(String text) {
-        List<WordWeight> explanation = new ArrayList<>();
-        for (String word : text.trim().split("\\s+")) {
-            double weight = ((Math.abs(word.hashCode()) % 100) - 50) / 100.0;
-            explanation.add(new WordWeight(word, weight));
-        }
-        Map<String, Double> criteria = new LinkedHashMap<>();
-        criteria.put("content", 8.0);
-        criteria.put("organization", 7.0);
-        criteria.put("grammar", 7.5);
-        criteria.put("vocabulary", 7.0);
-        criteria.put("coherence", 8.0);
-        return new ScoreResponse(7.5, criteria, explanation);
-    }
 }

@@ -123,7 +123,7 @@ public class AssignmentService {
 
     private Map<String, RubricItem> validateRubric(Map<String, RubricItem> rubric) {
         if (!rubric.keySet().equals(Set.copyOf(KEYS))) {
-            throw bad("Rubric phải có đủ 5 tiêu chí: " + String.join(", ", KEYS));
+            throw bad("Rubric phải có đủ " + KEYS.size() + " tiêu chí: " + String.join(", ", KEYS));
         }
         double sum = 0;
         Map<String, RubricItem> clean = new LinkedHashMap<>();

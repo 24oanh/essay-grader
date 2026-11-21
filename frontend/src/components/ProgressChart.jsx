@@ -2,13 +2,16 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer,
 } from "recharts";
 
+import { CRITERIA_KEYS, CRITERIA_LABELS } from "../utils/criteria";
+
+const COLORS = [
+  "#22c55e", "#eab308", "#ef4444", "#a855f7", "#06b6d4",
+  "#f97316", "#84cc16", "#ec4899", "#14b8a6", "#6366f1",
+];
+
 const LINES = [
   { key: "score", name: "Tổng điểm", color: "#2563eb", width: 3 },
-  { key: "content", name: "Nội dung", color: "#22c55e", width: 1.5 },
-  { key: "organization", name: "Cấu trúc", color: "#eab308", width: 1.5 },
-  { key: "grammar", name: "Ngữ pháp", color: "#ef4444", width: 1.5 },
-  { key: "vocabulary", name: "Từ vựng", color: "#a855f7", width: 1.5 },
-  { key: "coherence", name: "Mạch lạc", color: "#06b6d4", width: 1.5 },
+  ...CRITERIA_KEYS.map((k, i) => ({ key: k, name: CRITERIA_LABELS[k], color: COLORS[i], width: 1.5 })),
 ];
 
 export default function ProgressChart({ points }) {

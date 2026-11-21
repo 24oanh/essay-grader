@@ -6,6 +6,9 @@ const MIN_VISIBLE = 0.05; // trọng số nhỏ hơn mức này coi như không 
 export default function WordHighlight({ explanation }) {
   const [filter, setFilter] = useState("all"); // all | positive | negative
 
+  // Model hiện chưa có giải thích theo từ -> không hiển thị gì thay vì bịa số liệu
+  if (!explanation || explanation.length === 0) return null;
+
   const maxAbs = Math.max(...explanation.map((w) => Math.abs(w.weight)), 0);
 
   const topPositive = [...explanation]
